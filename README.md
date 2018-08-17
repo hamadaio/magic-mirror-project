@@ -1,0 +1,2 @@
+# project-smart_mirror
+
