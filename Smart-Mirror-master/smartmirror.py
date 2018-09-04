@@ -1,7 +1,7 @@
 # smartmirror.py
 # requirements
 # requests, feedparser, traceback, Pillow
-
+from __future__ import print_function
 from tkinter import *
 import locale
 import threading
@@ -11,7 +11,6 @@ import json
 import traceback
 import feedparser
 
-from __future__ import print_function
 import datetime
 from googleapiclient.discovery import build
 from httplib2 import Http
