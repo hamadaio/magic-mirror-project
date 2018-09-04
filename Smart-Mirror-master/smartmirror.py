@@ -26,8 +26,8 @@ LOCALE_LOCK = threading.Lock()
 ui_locale = '' # e.g. 'fr_FR' fro French, '' as default
 #changed to 24 for 24 hour format
 time_format = 24 # 12 or 24
-#changed to %Y %b %d for yy-mm-dd format
-date_format = "%Y %b, %d" # check python doc for strftime() for options
+#changed to %d %b %Y
+date_format = "%d %b, %Y" # check python doc for strftime() for options
 #changed from 'us' country code to none
 news_country_code = None #'se'
 #Account created at darksky.net, can make 1000 requests a day from the same account for free
@@ -42,6 +42,7 @@ xlarge_text_size = 94
 large_text_size = 48
 medium_text_size = 28
 small_text_size = 18
+minimal_text_size = 12
 y_pad = 10
 x_pad = 20
 
@@ -75,7 +76,7 @@ icon_lookup = {
 
 class Clock(Frame):
     def __init__(self, parent, *args, **kwargs):
-        Frame.__init__(self, parent, bg='black')
+        Frame.__init__(self, parent, bg='grey')
         # initialize time label
         self.time1 = ''
         self.timeLbl = Label(self, font=('Helvetica', large_text_size), fg="white", bg="black")
@@ -117,7 +118,7 @@ class Clock(Frame):
 
 class Weather(Frame):
     def __init__(self, parent, *args, **kwargs):
-        Frame.__init__(self, parent, bg='black')
+        Frame.__init__(self, parent, bg='green')
         self.temperature = ''
         self.forecast = ''
         self.location = ''
@@ -125,7 +126,7 @@ class Weather(Frame):
         self.icon = ''
         self.degreeFrm = Frame(self, bg="black")
         self.degreeFrm.pack(side=TOP, anchor=W)
-        self.temperatureLbl = Label(self.degreeFrm, font=('Helvetica', xlarge_text_size), fg="white", bg="black")
+        self.temperatureLbl = Label(self.degreeFrm, font=('Helvetica', large_text_size), fg="white", bg="black")
         self.temperatureLbl.pack(side=LEFT, anchor=N)
         self.iconLbl = Label(self.degreeFrm, bg="black")
         self.iconLbl.pack(side=LEFT, anchor=N, padx=20)
@@ -174,7 +175,7 @@ class Weather(Frame):
             degree_sign= u'\N{DEGREE SIGN}'
             temperature2 = "%s%s" % (str(int(weather_obj['currently']['temperature'])), degree_sign)
             currently2 = weather_obj['currently']['summary']
-            forecast2 = weather_obj["hourly"]["summary"]
+            forecast2 = '' #weather_obj["hourly"]["summary"]
 
             icon_id = weather_obj['currently']['icon']
             icon2 = None
@@ -186,7 +187,7 @@ class Weather(Frame):
                 if self.icon != icon2:
                     self.icon = icon2
                     image = Image.open(icon2)
-                    image = image.resize((100, 100), Image.ANTIALIAS)
+                    image = image.resize((75, 70), Image.ANTIALIAS)
                     image = image.convert('RGB')
                     photo = ImageTk.PhotoImage(image)
 
@@ -227,7 +228,7 @@ class Weather(Frame):
 class News(Frame):
     def __init__(self, parent, *args, **kwargs):
         Frame.__init__(self, parent, *args, **kwargs)
-        self.config(bg='black')
+        self.config(bg='red')
         # self.title changed from 'News' to 'Nyheter'
         self.title = 'Nyheter' # 'News' is more internationally generic
         self.newsLbl = Label(self, text=self.title, font=('Helvetica', small_text_size), fg="white", bg="black")
@@ -275,17 +276,18 @@ class NewsHeadline(Frame):
 
         self.eventName = event_name
         #News text size changed to small to make it less invasive on smaller screen
-        self.eventNameLbl = Label(self, text=self.eventName, font=('Helvetica', small_text_size), fg="white", bg="black")
+        self.eventNameLbl = Label(self, text=self.eventName, font=('Helvetica', minimal_text_size), fg="white", bg="black")
         self.eventNameLbl.pack(side=LEFT, anchor=N)
 
 
 class Calendar(Frame):
     def __init__(self, parent, *args, **kwargs):
-        Frame.__init__(self, parent, bg='black')
-        self.title = 'Calendar Events'
-        self.calendarLbl = Label(self, text=self.title, font=('Helvetica', medium_text_size), fg="white", bg="black")
-        self.calendarLbl.pack(side=TOP, anchor=E)
-        self.calendarEventContainer = Frame(self.start, font=('Helvetica', small_text_size), fg="white", bg='black')
+        Frame.__init__(self, parent, bg='blue')
+        self.start = ''
+        self.title = 'Kalender'
+        self.calendarLbl = Label(self, text=self.title, font=('Helvetica', small_text_size), fg="white", bg="black")
+        self.calendarLbl.pack(side=TOP, anchor=W)
+        self.calendarEventContainer = Frame(self, bg='black')
         self.calendarEventContainer.pack(side=TOP, anchor=E)
         self.get_events()
 
@@ -302,30 +304,29 @@ class Calendar(Frame):
         service = build('calendar', 'v3', http=creds.authorize(Http()))
         # Call the Calendar API
         now = datetime.datetime.utcnow().isoformat() + 'Z'  # 'Z' indicates UTC time
-        print('Getting the upcoming 10 events')
         events_result = service.events().list(calendarId='primary', timeMin=now,
-                                              maxResults=10, singleEvents=True,
+                                              maxResults=3, singleEvents=True,
                                               orderBy='startTime').execute()
         events = events_result.get('items', [])
 
         if not events:
             print('No upcoming events found.')
         for event in events:
-            self.start = event['start'].get('dateTime', event['start'].get('date'))
+            self.start += event['summary'] + ' ' + event['start'].get('dateTime')[0:10] + ' ' + event['start'].get('dateTime')[11:16] + '\n'
+     
         # remove all children
         for widget in self.calendarEventContainer.winfo_children():
             widget.destroy()
 
-        calendar_event = CalendarEvent(self.calendarEventContainer)
-        calendar_event.pack(side=TOP, anchor=E)
-        pass
+        calendar_event = CalendarEvent(self.calendarEventContainer, self.start)
+        calendar_event.pack(side=TOP, anchor=W)
 
 
 class CalendarEvent(Frame):
-    def __init__(self, parent, event_name="Event 1"):
+    def __init__(self, parent, event_name):
         Frame.__init__(self, parent, bg='black')
         self.eventName = event_name
-        self.eventNameLbl = Label(self, text=self.eventName, font=('Helvetica', small_text_size), fg="white", bg="black")
+        self.eventNameLbl = Label(self, text=self.eventName, font=('Helvetica', minimal_text_size), fg="white", bg="black")
         self.eventNameLbl.pack(side=TOP, anchor=E)
 
 
@@ -334,10 +335,14 @@ class FullscreenWindow:
     def __init__(self):
         self.tk = Tk()
         self.tk.configure(background='black')
-        self.topFrame = Frame(self.tk, background = 'black')
-        self.bottomFrame = Frame(self.tk, background = 'black')
+        self.topFrame = Frame(self.tk, background = 'purple')
+        self.leftFrame = Frame(self.tk, background = 'orange')
+        self.left2Frame = Frame(self.tk, background = 'magenta')
+        self.bottomFrame = Frame(self.tk, background = 'pink')
         self.topFrame.pack(side = TOP, fill=BOTH, expand = YES)
         self.bottomFrame.pack(side = BOTTOM, fill=BOTH, expand = YES)
+        self.leftFrame.pack(side = LEFT, fill=Y, expand = YES)
+        self.left2Frame.pack(side = LEFT, fill=BOTH, expand = YES)  
         self.state = True
         self.tk.bind("<Return>", self.toggle_fullscreen)
         self.tk.bind("<Escape>", self.end_fullscreen)
@@ -351,8 +356,8 @@ class FullscreenWindow:
         self.news = News(self.bottomFrame)
         self.news.pack(side=LEFT, anchor=S, padx=x_pad, pady=y_pad)
         # calender - removing for now
-        self.calender = Calendar(self.bottomFrame)
-        self.calender.pack(side = RIGHT, anchor=S, padx=100, pady=60)
+        self.calender = Calendar(self.leftFrame)
+        self.calender.pack(side = LEFT, anchor=N, padx=x_pad, pady=y_pad)
         # sets the tkinter display window to fullscreen as default
         self.tk.attributes("-fullscreen", self.state)
 
