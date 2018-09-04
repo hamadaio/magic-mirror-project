@@ -17,12 +17,18 @@ from contextlib import contextmanager
 LOCALE_LOCK = threading.Lock()
 
 ui_locale = '' # e.g. 'fr_FR' fro French, '' as default
+#changed to 24 for 24 hour format
 time_format = 24 # 12 or 24
+#changed to %Y %b %d for yy-mm-dd format
 date_format = "%Y %b, %d" # check python doc for strftime() for options
+#changed from 'us' country code to none
 news_country_code = None #'se'
+#Account created at darksky.net, can make 1000 requests a day from the same account for free
 weather_api_token = 'a87515b394e6cc671e762fe2f47cbede' # create account at https://darksky.net/dev/
+#weather lang and unit format set after darksky parameters
 weather_lang = 'sv' # see https://darksky.net/dev/docs/forecast for full list of language parameters values
 weather_unit = 'si' # see https://darksky.net/dev/docs/forecast for full list of unit parameters values
+#latitude and longitude not read from IP correctly and is currently hard coded. Currently set for Linköping,Sweden
 latitude = '58' # Set this if IP location lookup does not work for you (must be a string)
 longitude = '16' # Set this if IP location lookup does not work for you (must be a string)
 xlarge_text_size = 94
@@ -201,6 +207,7 @@ class Weather(Frame):
                     self.locationLbl.config(text=location2)
         except Exception as e:
             traceback.print_exc()
+            #added () arround printed string for use with python3
             print("Error: %s. Cannot get weather." % e)
 
         self.after(600000, self.get_weather)
@@ -214,6 +221,7 @@ class News(Frame):
     def __init__(self, parent, *args, **kwargs):
         Frame.__init__(self, parent, *args, **kwargs)
         self.config(bg='black')
+        # self.title changed from 'News' to 'Nyheter'
         self.title = 'Nyheter' # 'News' is more internationally generic
         self.newsLbl = Label(self, text=self.title, font=('Helvetica', small_text_size), fg="white", bg="black")
         self.newsLbl.pack(side=TOP, anchor=W)
@@ -227,6 +235,7 @@ class News(Frame):
             for widget in self.headlinesContainer.winfo_children():
                 widget.destroy()
             if news_country_code == None:
+                #Headline url changed to local rss feed, news_country_code is not working since google changed rss handling
                 headlines_url = "https://news.google.com/rss/?hl=sv&gl=SE&ceid=SE:sv&ned=sv_se"
             else:
                 headlines_url = "https://news.google.com/rss/%s?hl=sv&gl=SE&ceid=SE:sv&ned=sv_se" % news_country_code
@@ -238,6 +247,7 @@ class News(Frame):
                 headline.pack(side=TOP, anchor=W)
         except Exception as e:
             traceback.print_exc()
+            #added () arround printed string for use with python3
             print("Error: %s. Cannot get news." % e)
 
         self.after(600000, self.get_headlines)
@@ -257,6 +267,7 @@ class NewsHeadline(Frame):
         self.iconLbl.pack(side=LEFT, anchor=N)
 
         self.eventName = event_name
+        #News text size changed to small to make it less invasive on smaller screen
         self.eventNameLbl = Label(self, text=self.eventName, font=('Helvetica', small_text_size), fg="white", bg="black")
         self.eventNameLbl.pack(side=LEFT, anchor=N)
 
@@ -314,8 +325,9 @@ class FullscreenWindow:
         self.news = News(self.bottomFrame)
         self.news.pack(side=LEFT, anchor=S, padx=x_pad, pady=y_pad)
         # calender - removing for now
-        # self.calender = Calendar(self.bottomFrame)
-        # self.calender.pack(side = RIGHT, anchor=S, padx=100, pady=60)
+        self.calender = Calendar(self.bottomFrame)
+        self.calender.pack(side = RIGHT, anchor=S, padx=100, pady=60)
+        # sets the tkinter display window to fullscreen as default
         self.tk.attributes("-fullscreen", self.state)
 
     def toggle_fullscreen(self, event=None):
