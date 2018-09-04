@@ -11,9 +11,17 @@ import json
 import traceback
 import feedparser
 
+from __future__ import print_function
+import datetime
+from googleapiclient.discovery import build
+from httplib2 import Http
+from oauth2client import file, client, tools
+
 from PIL import Image, ImageTk
 from contextlib import contextmanager
 
+#Scopes for calendar
+SCOPES = 'https://www.googleapis.com/auth/calendar.readonly'
 LOCALE_LOCK = threading.Lock()
 
 ui_locale = '' # e.g. 'fr_FR' fro French, '' as default
@@ -280,12 +288,33 @@ class Calendar(Frame):
         self.calendarLbl.pack(side=TOP, anchor=E)
         self.calendarEventContainer = Frame(self, bg='black')
         self.calendarEventContainer.pack(side=TOP, anchor=E)
+        self.setup_calendar()
         self.get_events()
+
+    def setup_calendar(self):
+        store = file.Storage('token.json')
+        creds = store.get()
+        if not creds or creds.invalid:
+            flow = client.flow_from_clientsecrets('credentials.json', SCOPES)
+            creds = tools.run_flow(flow, store)
+        service = build('calendar', 'v3', http=creds.authorize(Http()))
 
     def get_events(self):
         #TODO: implement this method
         # reference https://developers.google.com/google-apps/calendar/quickstart/python
+        # Call the Calendar API
+        now = datetime.datetime.utcnow().isoformat() + 'Z'  # 'Z' indicates UTC time
+        print('Getting the upcoming 10 events')
+        events_result = service.events().list(calendarId='primary', timeMin=now,
+                                              maxResults=10, singleEvents=True,
+                                              orderBy='startTime').execute()
+        events = events_result.get('items', [])
 
+        if not events:
+            print('No upcoming events found.')
+        for event in events:
+            start = event['start'].get('dateTime', event['start'].get('date'))
+            start.pack(side=TOP, anchor=W)
         # remove all children
         for widget in self.calendarEventContainer.winfo_children():
             widget.destroy()
