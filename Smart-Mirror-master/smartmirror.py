@@ -285,26 +285,25 @@ class Calendar(Frame):
         self.title = 'Calendar Events'
         self.calendarLbl = Label(self, text=self.title, font=('Helvetica', medium_text_size), fg="white", bg="black")
         self.calendarLbl.pack(side=TOP, anchor=E)
-        self.calendarEventContainer = Frame(self, bg='black')
+        self.calendarEventContainer = Frame(self.start, font=('Helvetica', small_text_size), fg="white", bg='black')
         self.calendarEventContainer.pack(side=TOP, anchor=E)
-        self.setup_calendar()
         self.get_events()
 
-    def setup_calendar(self):
+
+
+    def get_events(self):
+        #TODO: implement this method
+        # reference https://developers.google.com/google-apps/calendar/quickstart/python
         store = file.Storage('token.json')
         creds = store.get()
         if not creds or creds.invalid:
             flow = client.flow_from_clientsecrets('credentials.json', SCOPES)
             creds = tools.run_flow(flow, store)
-        self.service = build('calendar', 'v3', http=creds.authorize(Http()))
-
-    def get_events(self):
-        #TODO: implement this method
-        # reference https://developers.google.com/google-apps/calendar/quickstart/python
+        service = build('calendar', 'v3', http=creds.authorize(Http()))
         # Call the Calendar API
         now = datetime.datetime.utcnow().isoformat() + 'Z'  # 'Z' indicates UTC time
         print('Getting the upcoming 10 events')
-        events_result = self.service.events().list(calendarId='primary', timeMin=now,
+        events_result = service.events().list(calendarId='primary', timeMin=now,
                                               maxResults=10, singleEvents=True,
                                               orderBy='startTime').execute()
         events = events_result.get('items', [])
@@ -312,8 +311,7 @@ class Calendar(Frame):
         if not events:
             print('No upcoming events found.')
         for event in events:
-            start = event['start'].get('dateTime', event['start'].get('date'))
-            start.pack(side=TOP, anchor=W)
+            self.start = event['start'].get('dateTime', event['start'].get('date'))
         # remove all children
         for widget in self.calendarEventContainer.winfo_children():
             widget.destroy()
