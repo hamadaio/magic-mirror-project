@@ -35,7 +35,7 @@ weather_api_token = 'a87515b394e6cc671e762fe2f47cbede' # create account at https
 #weather lang and unit format set after darksky parameters
 weather_lang = 'sv' # see https://darksky.net/dev/docs/forecast for full list of language parameters values
 weather_unit = 'si' # see https://darksky.net/dev/docs/forecast for full list of unit parameters values
-#latitude and longitude not read from IP correctly and is currently hard coded. Currently set for Linköping,Sweden
+#latitude and longitude not read from IP correctly and is currently hard coded. Currently set for Linkoping,Sweden
 latitude = '58' # Set this if IP location lookup does not work for you (must be a string)
 longitude = '16' # Set this if IP location lookup does not work for you (must be a string)
 xlarge_text_size = 94
