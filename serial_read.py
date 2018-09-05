@@ -1,40 +1,37 @@
 #!/usr/bin/env python3
- 
+'''
+original code: https://www.piddlerintheroot.com/voice-recognition/
+edited by MagicMirror group 2018-09-05
+
+'''
 import time
 import serial
  
 # voice command functions
 def empty():
-  print("nothing")
+  print("Listening...")
   #pass
- 
+  
 def one():
-  print('com1')
- 
- 
+  print('command 1')
+  
 def two():
-  print('com2')
- 
+  print('command 2')
  
 def three():
-  print('com3')
- 
+  print('command 3')
  
 def four():
-  print('com4')
- 
+  print('command 4')
  
 def five():
-  print('com5')
-
-def error():
-  print('error!!')
+  print('command 5')
  
  
 if __name__ == '__main__':
  
     # integers mapped to voice command functions
-    commands = {0:empty, 11:one, 12:two, 13:three, 14:four, 15:five, 82:error}
+    commands = {0:empty, 11:one, 12:two, 13:three, 14:four, 15:five}
  
     # serial settings
     ser = serial.Serial(
@@ -58,13 +55,13 @@ if __name__ == '__main__':
     try:
       while True:
         data_byte = ser.read(11) # read serial data (one byte)
-        int_val = (str(data_byte)[9:11])
-        if len(int_val) == 0:
+        int_val = (str(data_byte)[9:11]) # convert incoming stream (bytes) to string
+        if not int_val: # checking if the received stream it is an empty 'string'
           continue
         #print(int(str(data_byte)[9:11]))
         #int_val = int.from_bytes(data_byte, byteorder='big') # convert to integer
         #print(type(data_byte))
         print(int_val)
-        commands[int(int_val)]() # call voice command function
+        commands[int(int_val)]() # call voice command function & convert to 'int'
     except KeyboardInterrupt:
       print('Exiting Script')
