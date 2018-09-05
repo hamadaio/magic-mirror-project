@@ -33,7 +33,7 @@ if __name__ == '__main__':
     # integers mapped to voice command functions
     commands = {0:empty, 11:one, 12:two, 13:three, 14:four, 15:five}
  
-    # serial settings
+    # serial port settings for raspberry pi
     ser = serial.Serial(
         port='/dev/ttyUSB0',
         baudrate=9600,
