@@ -1,1 +1,15 @@
+read seril turotial:
+
 https://www.youtube.com/watch?v=8iAWfEPiz9I
+
++accompying link:
+https://www.piddlerintheroot.com/voice-recognition/
+
+
+read serial template:
+https://www.instructables.com/id/Read-and-write-from-serial-port-with-Raspberry-Pi/
+
+
+added mmstart.sh file to .bashrc to start magic mirror on startup
+work in progress...
+

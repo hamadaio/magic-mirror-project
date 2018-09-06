@@ -55,13 +55,14 @@ if __name__ == '__main__':
     try:
       while True:
         data_byte = ser.read(11) # read serial data (one byte)
-        int_val = (str(data_byte)[9:11]) # convert incoming stream (bytes) to string
-        if not int_val: # checking if the received stream it is an empty 'string'
-          continue
+        print(data_byte)
+        #int_val = (str(data_byte)[9:11]) # convert incoming stream (bytes) to string
+        #if not int_val: # checking if the received stream it is an empty 'string'
+         # continue
         #print(int(str(data_byte)[9:11]))
         #int_val = int.from_bytes(data_byte, byteorder='big') # convert to integer
         #print(type(data_byte))
-        print(int_val)
-        commands[int(int_val)]() # call voice command function & convert to 'int'
+        #print(int_val)
+        #commands[int(int_val)]() # call voice command function & convert to 'int'
     except KeyboardInterrupt:
       print('Exiting Script')
