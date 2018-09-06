@@ -6,10 +6,13 @@ from tkinter import *
 import locale
 import threading
 import time
+import serial
 import requests
 import json
 import traceback
 import feedparser
+import os
+import subprocess
 
 import datetime
 from googleapiclient.discovery import build
@@ -76,7 +79,7 @@ icon_lookup = {
 
 class Clock(Frame):
     def __init__(self, parent, *args, **kwargs):
-        Frame.__init__(self, parent, bg='grey')
+        Frame.__init__(self, parent, bg='black')
         # initialize time label
         self.time1 = ''
         self.timeLbl = Label(self, font=('Helvetica', large_text_size), fg="white", bg="black")
@@ -106,6 +109,7 @@ class Clock(Frame):
                 self.timeLbl.config(text=time2)
             if day_of_week2 != self.day_of_week1:
                 self.day_of_week1 = day_of_week2
+                day_of_week2 = day_of_week2.capitalize()
                 self.dayOWLbl.config(text=day_of_week2)
             if date2 != self.date1:
                 self.date1 = date2
@@ -118,7 +122,7 @@ class Clock(Frame):
 
 class Weather(Frame):
     def __init__(self, parent, *args, **kwargs):
-        Frame.__init__(self, parent, bg='green')
+        Frame.__init__(self, parent, bg='black')
         self.temperature = ''
         self.forecast = ''
         self.location = ''
@@ -228,7 +232,7 @@ class Weather(Frame):
 class News(Frame):
     def __init__(self, parent, *args, **kwargs):
         Frame.__init__(self, parent, *args, **kwargs)
-        self.config(bg='red')
+        self.config(bg='black')
         # self.title changed from 'News' to 'Nyheter'
         self.title = 'Nyheter' # 'News' is more internationally generic
         self.newsLbl = Label(self, text=self.title, font=('Helvetica', small_text_size), fg="white", bg="black")
@@ -282,18 +286,23 @@ class NewsHeadline(Frame):
 
 class Calendar(Frame):
     def __init__(self, parent, *args, **kwargs):
-        Frame.__init__(self, parent, bg='blue')
+        Frame.__init__(self, parent, bg='black')
         self.start = ''
+        self.start2 = ''
         self.title = 'Kalender'
         self.calendarLbl = Label(self, text=self.title, font=('Helvetica', small_text_size), fg="white", bg="black")
-        self.calendarLbl.pack(side=TOP, anchor=W)
+        self.calendarLbl.pack(side=TOP, anchor=E)
         self.calendarEventContainer = Frame(self, bg='black')
         self.calendarEventContainer.pack(side=TOP, anchor=E)
+        self.eventNameLbl = Label(self, text=self.start, anchor = W, justify = LEFT, font=('Helvetica', minimal_text_size),
+            fg="white", bg="black")
+        self.eventNameLbl.pack(side=TOP, anchor=E)
         self.get_events()
 
 
 
     def get_events(self):
+        
         #TODO: implement this method
         # reference https://developers.google.com/google-apps/calendar/quickstart/python
         store = file.Storage('token.json')
@@ -312,37 +321,99 @@ class Calendar(Frame):
         if not events:
             print('No upcoming events found.')
         for event in events:
-            self.start += event['summary'] + ' ' + event['start'].get('dateTime')[0:10] + ' ' + event['start'].get('dateTime')[11:16] + '\n'
+            self.start += (event['start'].get('dateTime')[0:10] + ' '
+                + event['summary'] + ' '+ event['start'].get('dateTime')[11:16] + '\n')
      
         # remove all children
         for widget in self.calendarEventContainer.winfo_children():
             widget.destroy()
 
-        calendar_event = CalendarEvent(self.calendarEventContainer, self.start)
-        calendar_event.pack(side=TOP, anchor=W)
+        if self.start != self.start2:
+            self.start2 = self.start
+            self.eventNameLbl.config(text=self.start)
 
+        self.start = ''
+            
+        self.after(600000, self.get_events)
 
-class CalendarEvent(Frame):
-    def __init__(self, parent, event_name):
-        Frame.__init__(self, parent, bg='black')
-        self.eventName = event_name
-        self.eventNameLbl = Label(self, text=self.eventName, font=('Helvetica', minimal_text_size), fg="white", bg="black")
-        self.eventNameLbl.pack(side=TOP, anchor=E)
+class Voice(Frame):
+    def __init__(self, parent):
+        self.var_one = 0
+        self.var_two = 0
+        Frame.__init__(self, parent)
+        # integers mapped to voice command functions
+        self.commands = {0:self.empty, 11:self.one, 12:self.two, 13:self.three, 14:self.four, 15:self.five}
+ 
+        # serial port settings for raspberry pi
+        self.ser = serial.Serial(
+            port='/dev/ttyUSB0',
+            baudrate=9600,
+            parity=serial.PARITY_NONE,
+            stopbits=serial.STOPBITS_ONE,
+            bytesize=serial.EIGHTBITS,
+            timeout=1
+        )
+        self.ser.flushInput()
+ 
+        # run twice to make sure it's in the correct mode
+        for i in range(2):
+          self.ser.write(serial.to_bytes([0xAA])) # set speech module to waiting state
+          time.sleep(0.5)
+          self.ser.write(serial.to_bytes([0x21])) # import group 1 and await voice input
+          time.sleep(0.5)
+        print('init complete')
+        self.serial_read()
 
+    def serial_read(self):
+        #print("serial_read")
+        data_byte = self.ser.read(11) # read serial data (one byte)
+        int_val = (str(data_byte)[9:11]) # convert incoming stream (bytes) to string
+        #print(int_val)
+        if int_val.isdigit(): # checking if the received stream it is an empty 'string'
+            self.commands[int(int_val)]() # call voice command function & convert to 'int'
+        #print(data_byte)
+            
+        self.after(3, self.serial_read)
 
+    def empty(self):
+      print("Listening...")
+  
+    def one(self):
+        print('command 1')
+        if not self.var_one:
+            subprocess.call('xset dpms force off', shell = True)
+        elif self.var_one:
+            subprocess.call('xset dpms force on', shell = True)
+        self.var_one ^= 1
+      
+    def two(self):
+      print('command 2')
+      if not self.var_two:
+          w.calender.eventNameLbl.config(fg='black')
+          w.calender.calendarLbl.config(fg='black')
+      elif self.var_two:
+          w.calender.eventNameLbl.config(fg='white')
+          w.calender.calendarLbl.config(fg='white')
+      self.var_two ^= 1
+     
+    def three(self):
+      print('command 3')
+     
+    def four(self):
+      print('command 4')
+     
+    def five(self):
+      print('command 5')
+      
 class FullscreenWindow:
 
     def __init__(self):
         self.tk = Tk()
         self.tk.configure(background='black')
-        self.topFrame = Frame(self.tk, background = 'purple')
-        self.leftFrame = Frame(self.tk, background = 'orange')
-        self.left2Frame = Frame(self.tk, background = 'magenta')
-        self.bottomFrame = Frame(self.tk, background = 'pink')
+        self.topFrame = Frame(self.tk, background = 'black')
+        self.bottomFrame = Frame(self.tk, background = 'black')
         self.topFrame.pack(side = TOP, fill=BOTH, expand = YES)
         self.bottomFrame.pack(side = BOTTOM, fill=BOTH, expand = YES)
-        self.leftFrame.pack(side = LEFT, fill=Y, expand = YES)
-        self.left2Frame.pack(side = LEFT, fill=BOTH, expand = YES)  
         self.state = True
         self.tk.bind("<Return>", self.toggle_fullscreen)
         self.tk.bind("<Escape>", self.end_fullscreen)
@@ -355,11 +426,13 @@ class FullscreenWindow:
         # news
         self.news = News(self.bottomFrame)
         self.news.pack(side=LEFT, anchor=S, padx=x_pad, pady=y_pad)
-        # calender - removing for now
-        self.calender = Calendar(self.leftFrame)
-        self.calender.pack(side = LEFT, anchor=N, padx=x_pad, pady=y_pad)
+        # calender
+        self.calender = Calendar(self.bottomFrame)
+        self.calender.pack(side = RIGHT, anchor=S, padx=x_pad, pady=y_pad)
         # sets the tkinter display window to fullscreen as default
         self.tk.attributes("-fullscreen", self.state)
+        #Voice
+        listen = Voice(self.topFrame)
 
     def toggle_fullscreen(self, event=None):
         self.state = not self.state  # Just toggling the boolean
