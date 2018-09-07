@@ -1,6 +1,7 @@
 # smartmirror.py
 # requirements
 # requests, feedparser, traceback, Pillow
+
 from __future__ import print_function
 from tkinter import *
 import locale
@@ -13,7 +14,7 @@ import traceback
 import feedparser
 import os
 import subprocess
-
+import urllib.request
 import datetime
 from googleapiclient.discovery import build
 from httplib2 import Http
@@ -336,10 +337,33 @@ class Calendar(Frame):
             
         self.after(600000, self.get_events)
 
+class Message(Frame):
+    def __init__(self, parent):
+        Frame.__init__(self, parent)
+        self.message_new  = ''
+        self.message_check = ''
+        self.messageLbl = Label(self, text=self.message_new, font=('Helvetica', small_text_size), fg="white", bg="black")
+        self.messageLbl.pack(side=TOP, anchor=S)
+        self.get_message()
+
+    def get_message(self):
+        #self.message_new = requests.get('https://docs.google.com/document/d/1rRTdEAyS7EpSZcbGKRs-3kQ0POZg93fUtAc5UmTB2h4/edit?usp=sharing')
+        self.message_new = urllib.request.urlopen('https://www.dropbox.com/s/jx5wrofaiaw2d7g/message.txt?raw=1').read(100)
+        if self.message_new != self.message_check:
+            self.messageLbl.config(text=self.message_new)
+            self.messageLbl.config(fg = 'white')
+            #w.listen.var_three = 0
+            self.message_check = self.message_new
+
+        self.after(60000, self.get_message)
+        
+        
+
 class Voice(Frame):
     def __init__(self, parent):
         self.var_one = 0
         self.var_two = 0
+        self.var_three = 0
         Frame.__init__(self, parent)
         # integers mapped to voice command functions
         self.commands = {0:self.empty, 11:self.one, 12:self.two, 13:self.three, 14:self.four, 15:self.five}
@@ -373,7 +397,7 @@ class Voice(Frame):
             self.commands[int(int_val)]() # call voice command function & convert to 'int'
         #print(data_byte)
             
-        self.after(3, self.serial_read)
+        self.after(10, self.serial_read)
 
     def empty(self):
       print("Listening...")
@@ -395,9 +419,15 @@ class Voice(Frame):
           w.calender.eventNameLbl.config(fg='white')
           w.calender.calendarLbl.config(fg='white')
       self.var_two ^= 1
+
      
     def three(self):
       print('command 3')
+      if not self.var_three:
+          w.message.messageLbl.config(fg='black')
+      elif self.var_three:
+          w.message.messageLbl.config(fg='white')
+      self.var_three ^= 1
      
     def four(self):
       print('command 4')
@@ -431,6 +461,9 @@ class FullscreenWindow:
         self.calender.pack(side = RIGHT, anchor=S, padx=x_pad, pady=y_pad)
         # sets the tkinter display window to fullscreen as default
         self.tk.attributes("-fullscreen", self.state)
+        #Message
+        self.message = Message(self.topFrame)
+        self.message.pack(side=BOTTOM, anchor=S)
         #Voice
         listen = Voice(self.topFrame)
 
