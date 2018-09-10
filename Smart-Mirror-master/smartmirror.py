@@ -1,6 +1,18 @@
+#
+#   File: smartmirror.py
+#   Authors: Mustafa Hamada, Christoffer Palm & Marie Sahiti
+#   Date: 2018-09-
+#   Description: This program gets information online and displays as white text on black background
+#   for use as smartmirror
+#
+#   Notes: Template code we built upon was taken from HackerShack at https://github.com/HackerShackOfficial/Smart-Mirror
+#
+
+
 # smartmirror.py
 # requirements
 # requests, feedparser, traceback, Pillow
+
 
 from __future__ import print_function
 from tkinter import *
@@ -291,12 +303,12 @@ class Calendar(Frame):
         self.start = ''
         self.start2 = ''
         self.title = 'Kalender'
-        self.calendarLbl = Label(self, text=self.title, font=('Helvetica', small_text_size), fg="white", bg="black")
+        self.calendarLbl = Label(self, text=self.title, font=('Helvetica', small_text_size), fg="black", bg="black")
         self.calendarLbl.pack(side=TOP, anchor=E)
         self.calendarEventContainer = Frame(self, bg='black')
         self.calendarEventContainer.pack(side=TOP, anchor=E)
         self.eventNameLbl = Label(self, text=self.start, anchor = W, justify = LEFT, font=('Helvetica', minimal_text_size),
-            fg="white", bg="black")
+            fg="black", bg="black")
         self.eventNameLbl.pack(side=TOP, anchor=E)
         self.get_events()
 
@@ -304,8 +316,6 @@ class Calendar(Frame):
 
     def get_events(self):
         
-        #TODO: implement this method
-        # reference https://developers.google.com/google-apps/calendar/quickstart/python
         store = file.Storage('token.json')
         creds = store.get()
         if not creds or creds.invalid:
@@ -335,24 +345,22 @@ class Calendar(Frame):
 
         self.start = ''
             
-        self.after(600000, self.get_events)
+        self.after(60000, self.get_events)
 
 class Message(Frame):
     def __init__(self, parent):
         Frame.__init__(self, parent)
         self.message_new  = ''
         self.message_check = ''
-        self.messageLbl = Label(self, text=self.message_new, font=('Helvetica', small_text_size), fg="white", bg="black")
+        self.messageLbl = Label(self, text=self.message_new, font=('Helvetica', medium_text_size), fg="white", bg="black")
         self.messageLbl.pack(side=TOP, anchor=S)
         self.get_message()
 
     def get_message(self):
-        #self.message_new = requests.get('https://docs.google.com/document/d/1rRTdEAyS7EpSZcbGKRs-3kQ0POZg93fUtAc5UmTB2h4/edit?usp=sharing')
-        self.message_new = urllib.request.urlopen('https://www.dropbox.com/s/jx5wrofaiaw2d7g/message.txt?raw=1').read(100)
+        self.message_new = urllib.request.urlopen('https://www.dropbox.com/s/gooevqruodwwakx/message_utf16.txt?raw=1').read(200)
         if self.message_new != self.message_check:
-            self.messageLbl.config(text=self.message_new)
+            self.messageLbl.config(text=self.message_new.decode('utf-16'))
             self.messageLbl.config(fg = 'white')
-            #w.listen.var_three = 0
             self.message_check = self.message_new
 
         self.after(60000, self.get_message)
@@ -362,8 +370,6 @@ class Message(Frame):
 class Voice(Frame):
     def __init__(self, parent):
         self.var_one = 0
-        self.var_two = 0
-        self.var_three = 0
         Frame.__init__(self, parent)
         # integers mapped to voice command functions
         self.commands = {0:self.empty, 11:self.one, 12:self.two, 13:self.three, 14:self.four, 15:self.five}
@@ -397,7 +403,7 @@ class Voice(Frame):
             self.commands[int(int_val)]() # call voice command function & convert to 'int'
         #print(data_byte)
             
-        self.after(10, self.serial_read)
+        self.after(5, self.serial_read)
 
     def empty(self):
       print("Listening...")
@@ -412,25 +418,30 @@ class Voice(Frame):
       
     def two(self):
       print('command 2')
-      if not self.var_two:
+      if w.calender.eventNameLbl.cget('fg') =='white':
           w.calender.eventNameLbl.config(fg='black')
           w.calender.calendarLbl.config(fg='black')
-      elif self.var_two:
+      elif w.calender.eventNameLbl.cget('fg') =='black':
           w.calender.eventNameLbl.config(fg='white')
           w.calender.calendarLbl.config(fg='white')
-      self.var_two ^= 1
 
      
     def three(self):
       print('command 3')
-      if not self.var_three:
-          w.message.messageLbl.config(fg='black')
-      elif self.var_three:
-          w.message.messageLbl.config(fg='white')
-      self.var_three ^= 1
+      '''if w.news.newsLbl.cget('fg') =='white':
+          w.news.newsLbl.config(fg='black')
+          w.news.eventNameLbl.config(fg='black')
+      elif w.news.newsLbl.cget('fg') =='black':
+          w.news.newsLbl.config(fg='white')
+          w.news.eventNameLbl.config(fg='white')'''
+
      
     def four(self):
       print('command 4')
+      if w.message.messageLbl.cget('fg') =='white':
+          w.message.messageLbl.config(fg='black')
+      elif w.message.messageLbl.cget('fg') =='black':
+          w.message.messageLbl.config(fg='white')
      
     def five(self):
       print('command 5')
@@ -455,7 +466,7 @@ class FullscreenWindow:
         self.weather.pack(side=LEFT, anchor=N, padx=x_pad, pady=y_pad)
         # news
         self.news = News(self.bottomFrame)
-        self.news.pack(side=LEFT, anchor=S, padx=x_pad, pady=y_pad)
+        self.news.pack(side=LEFT, anchor=S, padx=x_pad, pady=20)
         # calender
         self.calender = Calendar(self.bottomFrame)
         self.calender.pack(side = RIGHT, anchor=S, padx=x_pad, pady=y_pad)
