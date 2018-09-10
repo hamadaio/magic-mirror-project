@@ -1,3 +1,5 @@
 https://www.dropbox.com/s/jx5wrofaiaw2d7g/message.txt?dl=0
 
 https://docs.google.com/document/d/1rRTdEAyS7EpSZcbGKRs-3kQ0POZg93fUtAc5UmTB2h4/edit?usp=sharing
+
+UTF_16: https://www.dropbox.com/s/gooevqruodwwakx/message_utf16.txt?dl=0
