@@ -395,14 +395,16 @@ class Voice(Frame):
         self.serial_read()
 
     def serial_read(self):
-        #print("serial_read")
-        data_byte = self.ser.read(11) # read serial data (one byte)
-        int_val = (str(data_byte)[9:11]) # convert incoming stream (bytes) to string
-        #print(int_val)
-        if int_val.isdigit(): # checking if the received stream it is an empty 'string'
-            self.commands[int(int_val)]() # call voice command function & convert to 'int'
-        #print(data_byte)
-            
+        # print("serial_read")
+        control_string = 'Result:'
+        data_byte = self.ser.read(11)  # read serial data (one byte)
+        if len(data_byte) == 11 and str(data_byte)[1:9] == control_string:
+            int_val = (str(data_byte)[9:11])  # convert incoming stream (bytes) to string
+            # print(int_val)
+            if int_val.isdigit():  # checking if the received stream it is an empty 'string'
+                self.commands[int(int_val)]()  # call voice command function & convert to 'int'
+            # print(data_byte)
+
         self.after(5, self.serial_read)
 
     def empty(self):
