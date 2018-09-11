@@ -21,6 +21,7 @@ import feedparser
 import subprocess
 import urllib.request
 import datetime
+import xmltodict
 from googleapiclient.discovery import build
 from httplib2 import Http
 from oauth2client import file, client, tools
@@ -344,7 +345,7 @@ class Calendar(Frame):
 # Added in addition to the original widgets
 class Message(Frame):
     def __init__(self, parent):
-        Frame.__init__(self, parent)
+        Frame.__init__(self, parent, bg='black')
         self.message_new = ''
         self.message_check = ''
         self.messageLbl = Label(self, text=self.message_new, font=('Helvetica', medium_text_size), fg="black", bg="black")
@@ -364,16 +365,30 @@ class Message(Frame):
         
 class timeTable(Frame):
 	def __init__(self, parent):
-		Frame.__init__(self, parent)
-		self.timetableLbl = Label(self, text='', font=('Helvetica', medium_text_size), fg="black", bg="black")
-		self.timetableLbl.pack(side=TOP, anchor=S)
+		Frame.__init__(self, parent, bg='black')
+		self.time_title_string = 'Tidtabell'
+		self.time_table_string = ''
+		self.timeTitleLbl = Label(self, text=self.time_title_string, font=('Helvetica', medium_text_size), fg="white", bg="black")
+		self.timeTitleLbl.pack(side=TOP, anchor=W)
+		self.timetableLbl = Label(self, text=self.time_table_string, anchor=W, justify=LEFT, font=('Helvetica', minimal_text_size), fg="white", bg="black")
+		self.timetableLbl.pack(side=TOP, anchor=W)
 		self.get_timeTable()
-		self.timetableLbl.config(fg = 'black')
+		#self.timetableLbl.config(fg = 'black')
        
 	def get_timeTable(self):
-		get_api = requests.get("https://api.resrobot.se/v2/departureBoard?key=4deee6e8-978d-43ea-8564-2f6b0b405202&id=740054321&maxJourneys=3")
-		r = list(get_api)
-		print(r)
+		get_api = requests.get("https://api.resrobot.se/v2/departureBoard?key=4deee6e8-978d-43ea-8564-2f6b0b405202&id=740054321&direction=740000009&maxJourneys=3")
+		r = (get_api.text)
+		r = xmltodict.parse(r)
+		temp_string = r.get('DepartureBoard', {}).get('Departure', {})
+		
+		for i in range (3):
+			self.time_table_string += str(temp_string[i].get('@stop')[0:9] + ' ' + temp_string[i].get('@name')[13:] + 
+				' ' + temp_string[i].get('@time') + '\n')
+			
+		self.timetableLbl.config(text = self.time_table_string)
+		self.time_table_string = ''
+		
+		self.after(600000, self.get_timeTable)
         
 # New class for Geeetech voice-recognition module set-up
 class Voice(Frame):
@@ -466,8 +481,10 @@ class FullscreenWindow:
         self.tk.configure(background='black')
         self.topFrame = Frame(self.tk, background = 'black')
         self.bottomFrame = Frame(self.tk, background = 'black')
+        self.leftFrame = Frame(self.tk, background = 'black')
         self.topFrame.pack(side = TOP, fill=BOTH, expand = YES)
         self.bottomFrame.pack(side = BOTTOM, fill=BOTH, expand = YES)
+        self.leftFrame.pack(side = LEFT)
         self.state = True
         self.tk.bind("<Return>", self.toggle_fullscreen)
         self.tk.bind("<Escape>", self.end_fullscreen)
@@ -491,7 +508,8 @@ class FullscreenWindow:
         self.message = Message(self.topFrame)
         self.message.pack(side=BOTTOM, anchor=S)
         # Time Table
-        self.timetable = timeTable(self.topFrame)
+        self.timetable = timeTable(self.leftFrame)
+        self.timetable.pack(side=LEFT, anchor=W)
         # Voice
         Voice(self.topFrame) 
 
