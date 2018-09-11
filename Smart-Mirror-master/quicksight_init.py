@@ -376,19 +376,21 @@ class timeTable(Frame):
 		#self.timetableLbl.config(fg = 'black')
        
 	def get_timeTable(self):
-		get_api = requests.get("https://api.resrobot.se/v2/departureBoard?key=4deee6e8-978d-43ea-8564-2f6b0b405202&id=740054321&direction=740000009&maxJourneys=3")
-		r = (get_api.text)
-		r = xmltodict.parse(r)
-		temp_string = r.get('DepartureBoard', {}).get('Departure', {})
-		
-		for i in range (3):
-			self.time_table_string += str(temp_string[i].get('@stop')[0:9] + ' ' + temp_string[i].get('@name')[13:] + 
-				' ' + temp_string[i].get('@time') + '\n')
+		try:
+			get_api = requests.get("https://api.resrobot.se/v2/departureBoard?key=4deee6e8-978d-43ea-8564-2f6b0b405202&id=740054321&direction=740000009&maxJourneys=3")
+			r = (get_api.text)
+			r = xmltodict.parse(r)
+			temp_string = r.get('DepartureBoard', {}).get('Departure', {})
 			
-		self.timetableLbl.config(text = self.time_table_string)
-		self.time_table_string = ''
+			for i in range (3):
+				self.time_table_string += str(temp_string[i].get('@stop')[0:9] + ' ' + temp_string[i].get('@name')[13:] + 
+					' ' + temp_string[i].get('@time') + '\n')
+				
+			self.timetableLbl.config(text = self.time_table_string)
+			self.time_table_string = ''
 		
-		self.after(600000, self.get_timeTable)
+		finally:
+			self.after(600000, self.get_timeTable)
         
 # New class for Geeetech voice-recognition module set-up
 class Voice(Frame):
