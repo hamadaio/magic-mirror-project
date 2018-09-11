@@ -1,7 +1,5 @@
-Api key stolp: d3e37a5a-30f0-4bcc-94d5-8eda375c9cc5
+Api key stolp: 4deee6e8-978d-43ea-8564-2f6b0b405202
 
 Api key reseplanerare: add2c78d-5b35-415b-8c40-83195789b923
 
 Api url: https://api.resrobot.se/location.name.xml?key=ABC123&input=Centralen
-
-https://api.resrobot.se/v2/departureBoard?key=<DIN NYCKEL>&id=<HÅLLPLATSID>&maxJourneys=<MAX ANTAL SVAR>
