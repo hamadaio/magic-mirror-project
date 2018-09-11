@@ -1,0 +1,3 @@
+Api key: d3e37a5a-30f0-4bcc-94d5-8eda375c9cc5
+
+Api url: https://api.resrobot.se/location.name.xml?key=ABC123&input=Centralen
