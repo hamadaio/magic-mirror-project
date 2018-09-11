@@ -59,8 +59,9 @@ large_text_size = 48
 medium_text_size = 28
 small_text_size = 18
 minimal_text_size = 12
-y_pad = 10
+y_pad = 20
 x_pad = 20
+num_headlines = 0
 
 @contextmanager
 def setlocale(name): #thread proof function to work with locale
@@ -248,7 +249,7 @@ class News(Frame):
         self.config(bg='black')
         # self.title changed from 'News' to 'Nyheter'
         self.title = 'Nyheter' # 'News' is more internationally generic
-        self.newsLbl = Label(self, text=self.title, font=('Helvetica', small_text_size), fg="white", bg="black")
+        self.newsLbl = Label(self, text=self.title, font=('Helvetica', small_text_size), fg="black", bg="black")
         self.newsLbl.pack(side=TOP, anchor=W)
         self.headlinesContainer = Frame(self, bg="black")
         self.headlinesContainer.pack(side=TOP)
@@ -267,7 +268,7 @@ class News(Frame):
 
             feed = feedparser.parse(headlines_url)
 
-            for post in feed.entries[0:3]:
+            for post in feed.entries[0:num_headlines]:
                 headline = NewsHeadline(self.headlinesContainer, post.title)
                 headline.pack(side=TOP, anchor=W)
         except Exception as e:
@@ -332,8 +333,13 @@ class Calendar(Frame):
         if not events:
             print('No upcoming events found.')
         for event in events:
-            self.start += (event['start'].get('dateTime')[0:10] + ' '
+            #print(event)
+            
+            try: 
+                self.start += (event['start'].get('dateTime')[0:10] + ' '
                 + event['summary'] + ' '+ event['start'].get('dateTime')[11:16] + '\n')
+            except:
+                self.start += (event['start'].get('date') + ' ' + event['summary'] + '\n')
      
         # remove all children
         for widget in self.calendarEventContainer.winfo_children():
@@ -352,9 +358,10 @@ class Message(Frame):
         Frame.__init__(self, parent)
         self.message_new  = ''
         self.message_check = ''
-        self.messageLbl = Label(self, text=self.message_new, font=('Helvetica', medium_text_size), fg="white", bg="black")
+        self.messageLbl = Label(self, text=self.message_new, font=('Helvetica', medium_text_size), fg="black", bg="black")
         self.messageLbl.pack(side=TOP, anchor=S)
         self.get_message()
+        self.messageLbl.config(fg = 'black')
 
     def get_message(self):
         self.message_new = urllib.request.urlopen('https://www.dropbox.com/s/gooevqruodwwakx/message_utf16.txt?raw=1').read(200)
@@ -363,7 +370,7 @@ class Message(Frame):
             self.messageLbl.config(fg = 'white')
             self.message_check = self.message_new
 
-        self.after(60000, self.get_message)
+        self.after(18000, self.get_message)
         
         
 
@@ -395,14 +402,15 @@ class Voice(Frame):
         self.serial_read()
 
     def serial_read(self):
-        # print("serial_read")
+        #print("serial_read")
         control_string = 'Result:'
         data_byte = self.ser.read(11)  # read serial data (one byte)
-        if len(data_byte) == 11 and str(data_byte)[1:9] == control_string:
-            int_val = (str(data_byte)[9:11])  # convert incoming stream (bytes) to string
-            # print(int_val)
-            if int_val.isdigit():  # checking if the received stream it is an empty 'string'
-                self.commands[int(int_val)]()  # call voice command function & convert to 'int'
+        #print(str(data_byte)[2:9])
+        if len(data_byte) == 11 and str(data_byte)[2:9] == control_string:
+            int_val = int(str(data_byte)[9:11])  # convert incoming stream (bytes) to string
+            #print(int_val)
+            if int_val in self.commands:
+                self.commands[int_val]()  # call voice command function & convert to 'int'
             # print(data_byte)
 
         self.after(5, self.serial_read)
@@ -430,12 +438,15 @@ class Voice(Frame):
      
     def three(self):
       print('command 3')
-      '''if w.news.newsLbl.cget('fg') =='white':
+      global num_headlines
+      if num_headlines == 3:
           w.news.newsLbl.config(fg='black')
-          w.news.eventNameLbl.config(fg='black')
-      elif w.news.newsLbl.cget('fg') =='black':
+          num_headlines = 0
+          w.news.get_headlines()
+      elif num_headlines == 0:
           w.news.newsLbl.config(fg='white')
-          w.news.eventNameLbl.config(fg='white')'''
+          num_headlines = 3
+          w.news.get_headlines()
 
      
     def four(self):
@@ -468,7 +479,7 @@ class FullscreenWindow:
         self.weather.pack(side=LEFT, anchor=N, padx=x_pad, pady=y_pad)
         # news
         self.news = News(self.bottomFrame)
-        self.news.pack(side=LEFT, anchor=S, padx=x_pad, pady=20)
+        self.news.pack(side=LEFT, anchor=S, padx=x_pad, pady=y_pad)
         # calender
         self.calender = Calendar(self.bottomFrame)
         self.calender.pack(side = RIGHT, anchor=S, padx=x_pad, pady=y_pad)
