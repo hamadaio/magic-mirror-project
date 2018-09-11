@@ -1,7 +1,13 @@
-# smartmirror.py
-# requirements
-# requests, feedparser, traceback, Pillow
+#   Product name: QuickSight
+#   File name: quicksight_init.py
+#   Original author/ code template: https://github.com/HackerShackOfficial/Smart-Mirror
+#   Original code edited by: Mustafa S. Hamada, Christoffer Palm & Marie Sahiti
+#   Date: 2018-09-
+#   Description:
+#   Voice-controlled Python(3) program that displays widgets with information snippets for every day use
 
+
+#################### IMPORT LIBRARIES ####################
 from __future__ import print_function
 from tkinter import *
 import locale
@@ -12,21 +18,21 @@ import requests
 import json
 import traceback
 import feedparser
-import os
 import subprocess
 import urllib.request
 import datetime
 from googleapiclient.discovery import build
 from httplib2 import Http
 from oauth2client import file, client, tools
-
 from PIL import Image, ImageTk
 from contextlib import contextmanager
 
-#Scopes for calendar
+#################### SCOPES OF ACCESS FOR CALENDAR ####################
 SCOPES = 'https://www.googleapis.com/auth/calendar.readonly'
 LOCALE_LOCK = threading.Lock()
 
+
+#################### COUNTRY AND METRIC SETTINGS FOR WIDGETS ####################
 ui_locale = '' # e.g. 'fr_FR' fro French, '' as default
 #changed to 24 for 24 hour format
 time_format = 24 # 12 or 24
@@ -42,14 +48,19 @@ weather_unit = 'si' # see https://darksky.net/dev/docs/forecast for full list of
 #latitude and longitude not read from IP correctly and is currently hard coded. Currently set for Linkoping,Sweden
 latitude = '58' # Set this if IP location lookup does not work for you (must be a string)
 longitude = '16' # Set this if IP location lookup does not work for you (must be a string)
+
+#################### FONT AND WIDGET PADDINGS SETTINGS ####################
 xlarge_text_size = 94
 large_text_size = 48
 medium_text_size = 28
 small_text_size = 18
 minimal_text_size = 12
-y_pad = 10
-x_pad = 20
+y_pad = 20  # vertical widget padding (distance from top)
+x_pad = 20  # horizontal widet padding (distance from side)
+num_headlines = 0 # global variable set to '0' for news feed fetch
 
+
+#################### CONSTRUCT ####################
 @contextmanager
 def setlocale(name): #thread proof function to work with locale
     with LOCALE_LOCK:
@@ -59,11 +70,10 @@ def setlocale(name): #thread proof function to work with locale
         finally:
             locale.setlocale(locale.LC_ALL, saved)
 
-# maps open weather icons to
-# icon reading is not impacted by the 'lang' parameter
+# maps open weather icons to icon reading is not impacted by the 'lang' parameter
 icon_lookup = {
     'clear-day': "assets/Sun.png",  # clear sky day
-    'wind': "assets/Wind.png",   #wind
+    'wind': "assets/Wind.png",   # wind
     'cloudy': "assets/Cloud.png",  # cloudy day
     'partly-cloudy-day': "assets/PartlySunny.png",  # partly cloudy day
     'rain': "assets/Rain.png",  # rain day
@@ -77,7 +87,7 @@ icon_lookup = {
     'hail': "assests/Hail.png"  # hail
 }
 
-
+#################### WIDGET CLASS DEFINITIONS ####################
 class Clock(Frame):
     def __init__(self, parent, *args, **kwargs):
         Frame.__init__(self, parent, bg='black')
@@ -101,7 +111,6 @@ class Clock(Frame):
                 time2 = time.strftime('%I:%M %p') #hour in 12h format
             else:
                 time2 = time.strftime('%H:%M') #hour in 24h format
-
             day_of_week2 = time.strftime('%A')
             date2 = time.strftime(date_format)
             # if time string has changed, update it
@@ -115,9 +124,8 @@ class Clock(Frame):
             if date2 != self.date1:
                 self.date1 = date2
                 self.dateLbl.config(text=date2)
+
             # calls itself every 200 milliseconds
-            # to update the time display as needed
-            # could use >200 ms, but display gets jerky
             self.timeLbl.after(200, self.tick)
 
 
@@ -180,7 +188,7 @@ class Weather(Frame):
             degree_sign= u'\N{DEGREE SIGN}'
             temperature2 = "%s%s" % (str(int(weather_obj['currently']['temperature'])), degree_sign)
             currently2 = weather_obj['currently']['summary']
-            forecast2 = '' #weather_obj["hourly"]["summary"]
+            forecast2 = '' # forecast2 is left intentionally empty for optional use by end-user
 
             icon_id = weather_obj['currently']['icon']
             icon2 = None
@@ -220,7 +228,6 @@ class Weather(Frame):
                     self.locationLbl.config(text=location2)
         except Exception as e:
             traceback.print_exc()
-            #added () arround printed string for use with python3
             print("Error: %s. Cannot get weather." % e)
 
         self.after(600000, self.get_weather)
@@ -236,7 +243,7 @@ class News(Frame):
         self.config(bg='black')
         # self.title changed from 'News' to 'Nyheter'
         self.title = 'Nyheter' # 'News' is more internationally generic
-        self.newsLbl = Label(self, text=self.title, font=('Helvetica', small_text_size), fg="white", bg="black")
+        self.newsLbl = Label(self, text=self.title, font=('Helvetica', small_text_size), fg="black", bg="black")
         self.newsLbl.pack(side=TOP, anchor=W)
         self.headlinesContainer = Frame(self, bg="black")
         self.headlinesContainer.pack(side=TOP)
@@ -249,18 +256,18 @@ class News(Frame):
                 widget.destroy()
             if news_country_code == None:
                 #Headline url changed to local rss feed, news_country_code is not working since google changed rss handling
+                #In order to work insert 'rss' after ...com/ in the url-link
                 headlines_url = "https://news.google.com/rss/?hl=sv&gl=SE&ceid=SE:sv&ned=sv_se"
             else:
                 headlines_url = "https://news.google.com/rss/%s?hl=sv&gl=SE&ceid=SE:sv&ned=sv_se" % news_country_code
 
             feed = feedparser.parse(headlines_url)
 
-            for post in feed.entries[0:3]:
+            for post in feed.entries[0:num_headlines]:
                 headline = NewsHeadline(self.headlinesContainer, post.title)
                 headline.pack(side=TOP, anchor=W)
         except Exception as e:
             traceback.print_exc()
-            #added () arround printed string for use with python3
             print("Error: %s. Cannot get news." % e)
 
         self.after(600000, self.get_headlines)
@@ -280,7 +287,6 @@ class NewsHeadline(Frame):
         self.iconLbl.pack(side=LEFT, anchor=N)
 
         self.eventName = event_name
-        #News text size changed to small to make it less invasive on smaller screen
         self.eventNameLbl = Label(self, text=self.eventName, font=('Helvetica', minimal_text_size), fg="white", bg="black")
         self.eventNameLbl.pack(side=LEFT, anchor=N)
 
@@ -291,21 +297,16 @@ class Calendar(Frame):
         self.start = ''
         self.start2 = ''
         self.title = 'Kalender'
-        self.calendarLbl = Label(self, text=self.title, font=('Helvetica', small_text_size), fg="white", bg="black")
+        self.calendarLbl = Label(self, text=self.title, font=('Helvetica', small_text_size), fg="black", bg="black")
         self.calendarLbl.pack(side=TOP, anchor=E)
         self.calendarEventContainer = Frame(self, bg='black')
         self.calendarEventContainer.pack(side=TOP, anchor=E)
         self.eventNameLbl = Label(self, text=self.start, anchor = W, justify = LEFT, font=('Helvetica', minimal_text_size),
-            fg="white", bg="black")
+            fg="black", bg="black")
         self.eventNameLbl.pack(side=TOP, anchor=E)
         self.get_events()
 
-
-
     def get_events(self):
-        
-        #TODO: implement this method
-        # reference https://developers.google.com/google-apps/calendar/quickstart/python
         store = file.Storage('token.json')
         creds = store.get()
         if not creds or creds.invalid:
@@ -322,10 +323,13 @@ class Calendar(Frame):
         if not events:
             print('No upcoming events found.')
         for event in events:
-            self.start += (event['start'].get('dateTime')[0:10] + ' '
+            try: 
+                self.start += (event['start'].get('dateTime')[0:10] + ' '
                 + event['summary'] + ' '+ event['start'].get('dateTime')[11:16] + '\n')
+            except:
+                self.start += (event['start'].get('date') + ' ' + event['summary'] + '\n')
      
-        # remove all children
+        # Removes all children i.e. any interfering pop-windows
         for widget in self.calendarEventContainer.winfo_children():
             widget.destroy()
 
@@ -335,40 +339,39 @@ class Calendar(Frame):
 
         self.start = ''
             
-        self.after(600000, self.get_events)
+        self.after(60000, self.get_events)
 
+# Added in addition to the original widgets
 class Message(Frame):
     def __init__(self, parent):
         Frame.__init__(self, parent)
-        self.message_new  = ''
+        self.message_new = ''
         self.message_check = ''
-        self.messageLbl = Label(self, text=self.message_new, font=('Helvetica', small_text_size), fg="white", bg="black")
+        self.messageLbl = Label(self, text=self.message_new, font=('Helvetica', medium_text_size), fg="black", bg="black")
         self.messageLbl.pack(side=TOP, anchor=S)
         self.get_message()
+        self.messageLbl.config(fg = 'black')
 
     def get_message(self):
-        #self.message_new = requests.get('https://docs.google.com/document/d/1rRTdEAyS7EpSZcbGKRs-3kQ0POZg93fUtAc5UmTB2h4/edit?usp=sharing')
-        self.message_new = urllib.request.urlopen('https://www.dropbox.com/s/jx5wrofaiaw2d7g/message.txt?raw=1').read(100)
+        # Displayed message is read (200 characters) from a text file (UTF-16) in the user Dropbox account
+        self.message_new = urllib.request.urlopen('https://www.dropbox.com/s/gooevqruodwwakx/message_utf16.txt?raw=1').read(200)
         if self.message_new != self.message_check:
-            self.messageLbl.config(text=self.message_new)
+            self.messageLbl.config(text=self.message_new.decode('utf-16'))
             self.messageLbl.config(fg = 'white')
-            #w.listen.var_three = 0
             self.message_check = self.message_new
 
-        self.after(60000, self.get_message)
+        self.after(18000, self.get_message)
         
         
-
+# New class for Geeetech voice-recognition module set-up
 class Voice(Frame):
     def __init__(self, parent):
         self.var_one = 0
-        self.var_two = 0
-        self.var_three = 0
         Frame.__init__(self, parent)
-        # integers mapped to voice command functions
-        self.commands = {0:self.empty, 11:self.one, 12:self.two, 13:self.three, 14:self.four, 15:self.five}
+        # Dictionary of integers mapped to voice command functions
+        self.commands = {11:self.one, 12:self.two, 13:self.three, 14:self.four, 15:self.five}
  
-        # serial port settings for raspberry pi
+        # serial port settings for raspberry pi 3 B v.2
         self.ser = serial.Serial(
             port='/dev/ttyUSB0',
             baudrate=9600,
@@ -379,9 +382,9 @@ class Voice(Frame):
         )
         self.ser.flushInput()
  
-        # run twice to make sure it's in the correct mode
+        # For safety run twice to make sure it is in the correct mode
         for i in range(2):
-          self.ser.write(serial.to_bytes([0xAA])) # set speech module to waiting state
+          self.ser.write(serial.to_bytes([0xAA])) # set speech module to waiting state. See voice module data sheet.
           time.sleep(0.5)
           self.ser.write(serial.to_bytes([0x21])) # import group 1 and await voice input
           time.sleep(0.5)
@@ -389,56 +392,65 @@ class Voice(Frame):
         self.serial_read()
 
     def serial_read(self):
-        #print("serial_read")
-        data_byte = self.ser.read(11) # read serial data (one byte)
-        int_val = (str(data_byte)[9:11]) # convert incoming stream (bytes) to string
-        #print(int_val)
-        if int_val.isdigit(): # checking if the received stream it is an empty 'string'
-            self.commands[int(int_val)]() # call voice command function & convert to 'int'
-        #print(data_byte)
-            
-        self.after(10, self.serial_read)
+        control_string = 'Result:'
+        data_byte = self.ser.read(11)  # read serial data (11 bytes)
+        if len(data_byte) == 11 and str(data_byte)[2:9] == control_string:
+            int_val = int(str(data_byte)[9:11])  # converts the last two 'bytes' of the incoming stream to 'string' then to 'int'
+            if int_val in self.commands: # checks if 'int_val' is an existing 'key' in the command dictionary (line 373)
+                self.commands[int_val]()
 
-    def empty(self):
-      print("Listening...")
-  
+        self.after(5, self.serial_read)
+
+    # Uses system screen saver function to turn on and off the monitor
     def one(self):
-        print('command 1')
+        print('command 1') # prints to console window
         if not self.var_one:
             subprocess.call('xset dpms force off', shell = True)
         elif self.var_one:
             subprocess.call('xset dpms force on', shell = True)
         self.var_one ^= 1
-      
+
+    # Alternates the calendar font colours upon incoming voice command
     def two(self):
       print('command 2')
-      if not self.var_two:
+      if w.calender.eventNameLbl.cget('fg') =='white':
           w.calender.eventNameLbl.config(fg='black')
           w.calender.calendarLbl.config(fg='black')
-      elif self.var_two:
+      elif w.calender.eventNameLbl.cget('fg') =='black':
           w.calender.eventNameLbl.config(fg='white')
           w.calender.calendarLbl.config(fg='white')
-      self.var_two ^= 1
 
-     
+    # Alternates the news header label colour and number of news headlines
     def three(self):
       print('command 3')
-      if not self.var_three:
-          w.message.messageLbl.config(fg='black')
-      elif self.var_three:
-          w.message.messageLbl.config(fg='white')
-      self.var_three ^= 1
-     
+      global num_headlines
+      if num_headlines == 3:
+          w.news.newsLbl.config(fg='black')
+          num_headlines = 0
+          w.news.get_headlines()
+      elif num_headlines == 0:
+          w.news.newsLbl.config(fg='white')
+          num_headlines = 3
+          w.news.get_headlines()
+
+    # Alternates the calendar font colours upon incoming voice command
     def four(self):
       print('command 4')
-     
+      if w.message.messageLbl.cget('fg') =='white':
+          w.message.messageLbl.config(fg='black')
+      elif w.message.messageLbl.cget('fg') =='black':
+          w.message.messageLbl.config(fg='white')
+
+    # Default...
     def five(self):
       print('command 5')
-      
-class FullscreenWindow:
 
+
+
+class FullscreenWindow:
     def __init__(self):
-        self.tk = Tk()
+        # Frame setup
+        self.tk = Tk() # Creates an object of Tk()
         self.tk.configure(background='black')
         self.topFrame = Frame(self.tk, background = 'black')
         self.bottomFrame = Frame(self.tk, background = 'black')
@@ -447,25 +459,27 @@ class FullscreenWindow:
         self.state = True
         self.tk.bind("<Return>", self.toggle_fullscreen)
         self.tk.bind("<Escape>", self.end_fullscreen)
-        # clock
+
+        # Creates objects of each widget class
+        # Clock
         self.clock = Clock(self.topFrame)
         self.clock.pack(side=RIGHT, anchor=N, padx=x_pad, pady=y_pad)
-        # weather
+        # Weather
         self.weather = Weather(self.topFrame)
         self.weather.pack(side=LEFT, anchor=N, padx=x_pad, pady=y_pad)
-        # news
+        # News
         self.news = News(self.bottomFrame)
         self.news.pack(side=LEFT, anchor=S, padx=x_pad, pady=y_pad)
-        # calender
+        # Calender
         self.calender = Calendar(self.bottomFrame)
         self.calender.pack(side = RIGHT, anchor=S, padx=x_pad, pady=y_pad)
         # sets the tkinter display window to fullscreen as default
         self.tk.attributes("-fullscreen", self.state)
-        #Message
+        # Message
         self.message = Message(self.topFrame)
         self.message.pack(side=BOTTOM, anchor=S)
-        #Voice
-        listen = Voice(self.topFrame)
+        # Voice
+        Voice(self.topFrame) # removed 'listen'
 
     def toggle_fullscreen(self, event=None):
         self.state = not self.state  # Just toggling the boolean
@@ -477,6 +491,8 @@ class FullscreenWindow:
         self.tk.attributes("-fullscreen", False)
         return "break"
 
+
+# Creates an object of the FullscreenWindow class and run it in an endless loop until interrupted
 if __name__ == '__main__':
     w = FullscreenWindow()
     w.tk.mainloop()
