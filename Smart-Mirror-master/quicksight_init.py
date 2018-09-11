@@ -49,7 +49,7 @@ weather_unit = 'si' # see https://darksky.net/dev/docs/forecast for full list of
 latitude = '58' # Set this if IP location lookup does not work for you (must be a string)
 longitude = '16' # Set this if IP location lookup does not work for you (must be a string)
 
-#################### FONT AND WIDGET PADDINGS SETTINGS ####################
+#################### FONT AND WIDGET PADDING- SETTINGS ####################
 xlarge_text_size = 94
 large_text_size = 48
 medium_text_size = 28
@@ -362,6 +362,18 @@ class Message(Frame):
 
         self.after(18000, self.get_message)
         
+class timeTable(Frame):
+	def __init__(self, parent):
+		Frame.__init__(self, parent)
+		self.timetableLbl = Label(self, text='', font=('Helvetica', medium_text_size), fg="black", bg="black")
+		self.timetableLbl.pack(side=TOP, anchor=S)
+		self.get_timeTable()
+		self.timetableLbl.config(fg = 'black')
+       
+	def get_timeTable(self):
+		get_api = requests.get("https://api.resrobot.se/v2/departureBoard?key=4deee6e8-978d-43ea-8564-2f6b0b405202&id=740054321&maxJourneys=3")
+		r = list(get_api)
+		print(r)
         
 # New class for Geeetech voice-recognition module set-up
 class Voice(Frame):
@@ -478,8 +490,10 @@ class FullscreenWindow:
         # Message
         self.message = Message(self.topFrame)
         self.message.pack(side=BOTTOM, anchor=S)
+        # Time Table
+        self.timetable = timeTable(self.topFrame)
         # Voice
-        Voice(self.topFrame) # removed 'listen'
+        Voice(self.topFrame) 
 
     def toggle_fullscreen(self, event=None):
         self.state = not self.state  # Just toggling the boolean
