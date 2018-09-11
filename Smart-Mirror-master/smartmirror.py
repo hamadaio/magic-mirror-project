@@ -1,6 +1,6 @@
 #
 #   File: smartmirror.py
-#   Authors: Mustafa Hamada, Christoffer Palm & Marie Sahiti
+#   Authors: Mustafa S. Hamada, Christoffer Palm & Marie Sahiti
 #   Date: 2018-09-
 #   Description: This program gets information online and displays as white text on black background
 #   for use as smartmirror
