@@ -10,6 +10,12 @@
 #################### IMPORT LIBRARIES ####################
 from __future__ import print_function
 from tkinter import *
+from googleapiclient.discovery import build
+from httplib2 import Http
+from oauth2client import file, client, tools
+from PIL import Image, ImageTk
+from contextlib import contextmanager
+
 import locale
 import threading
 import time
@@ -22,11 +28,6 @@ import subprocess
 import urllib.request
 import datetime
 import xmltodict
-from googleapiclient.discovery import build
-from httplib2 import Http
-from oauth2client import file, client, tools
-from PIL import Image, ImageTk
-from contextlib import contextmanager
 
 #################### SCOPES OF ACCESS FOR CALENDAR ####################
 SCOPES = 'https://www.googleapis.com/auth/calendar.readonly'
