@@ -372,62 +372,62 @@ class timeTable(Frame):
 		self.time_table_string = ''
 		self.timeTitleLbl = Label(self, text=self.time_title_string, font=('Helvetica', medium_text_size), fg="white", bg="black")
 		self.timeTitleLbl.pack(side=TOP, anchor=W)
-		self.timetableLbl = Label(self, text=self.time_table_string, anchor=W, justify=LEFT, font=('Helvetica', minimal_text_size), fg="white", bg="black")
-		self.timetableLbl.pack(side=TOP, anchor=W)
+		self.timeTableLbl = Label(self, text=self.time_table_string, anchor=W, justify=LEFT, font=('Helvetica', minimal_text_size), fg="white", bg="black")
+		self.timeTableLbl.pack(side=TOP, anchor=W)
 		self.get_timeTable()
-		#self.timetableLbl.config(fg = 'black')
+		self.timeTableLbl.config(fg = 'black')
+		self.timeTitleLbl.config(fg = 'black')
        
 	def get_timeTable(self):
+		get_api = requests.get("https://api.resrobot.se/v2/departureBoard?key=4deee6e8-978d-43ea-8564-2f6b0b405202&id=740054321&direction=740000009&maxJourneys=3")
+		r = (get_api.text)
+		r = xmltodict.parse(r)
+		temp_string = r.get('DepartureBoard', {}).get('Departure', {})
 		try:
-			get_api = requests.get("https://api.resrobot.se/v2/departureBoard?key=4deee6e8-978d-43ea-8564-2f6b0b405202&id=740054321&direction=740000009&maxJourneys=3")
-			r = (get_api.text)
-			r = xmltodict.parse(r)
-			temp_string = r.get('DepartureBoard', {}).get('Departure', {})
-			
 			for i in range (3):
 				self.time_table_string += str(temp_string[i].get('@stop')[0:9] + ' ' + temp_string[i].get('@name')[13:] + 
-					' ' + temp_string[i].get('@time') + '\n')
-				
-			self.timetableLbl.config(text = self.time_table_string)
-			self.time_table_string = ''
-		
+				' ' + temp_string[i].get('@time') + '\n')
+
+			self.timeTableLbl.config(text = self.time_table_string)
+
 		finally:
+			self.time_table_string = ''
 			self.after(600000, self.get_timeTable)
         
 # New class for Geeetech voice-recognition module set-up
 class Voice(Frame):
-    def __init__(self, parent):
-        self.var_one = 0
-        Frame.__init__(self, parent)
-        # Dictionary of integers mapped to voice command functions
-        self.commands = {11:self.one, 12:self.two, 13:self.three, 14:self.four, 15:self.five}
+	def __init__(self, parent):
+		self.var_one = 0
+		Frame.__init__(self, parent)
+		# Dictionary of integers mapped to voice command functions
+		self.commands = {11:self.one, 12:self.two, 13:self.three, 14:self.four, 15:self.five}
  
-        # serial port settings for raspberry pi 3 B v.2
-        self.ser = serial.Serial(
-            port='/dev/ttyUSB0',
-            baudrate=9600,
-            parity=serial.PARITY_NONE,
-            stopbits=serial.STOPBITS_ONE,
-            bytesize=serial.EIGHTBITS,
-            timeout=1
-        )
-        self.ser.flushInput()
+		# serial port settings for raspberry pi 3 B v.2
+		self.ser = serial.Serial(
+			port='/dev/ttyUSB0',
+			baudrate=9600,
+			parity=serial.PARITY_NONE,
+			stopbits=serial.STOPBITS_ONE,
+			bytesize=serial.EIGHTBITS,
+			timeout=1
+		)
+		self.ser.flushInput()
  
-        # For safety run twice to make sure it is in the correct mode
-        for i in range(2):
-          	self.ser.write(serial.to_bytes([0xAA])) # set speech module to waiting state. See voice module data sheet.
-          	time.sleep(0.5)
-          	self.ser.write(serial.to_bytes([0x21])) # import group 1 and await voice input
-          	time.sleep(0.5)
-        print('init complete')
-        self.serial_read()
+		# For safety run twice to make sure it is in the correct mode
+		for i in range(2):
+			self.ser.write(serial.to_bytes([0xAA])) # set speech module to waiting state. See voice module data sheet.
+			time.sleep(0.5)
+			self.ser.write(serial.to_bytes([0x21])) # import group 1 and await voice input
+			time.sleep(0.5)
+		print('init complete')
+		self.serial_read()
 
 	def serial_read(self):
-	  	control_string = 'Result:'
-	  	data_byte = self.ser.read(11)  # read serial data (11 bytes)
-	  	if len(data_byte) == 11 and str(data_byte)[2:9] == control_string:
-		  	int_val = int(str(data_byte)[9:11])  # converts the last two 'bytes' of the incoming stream to 'string' then to 'int'
-		  	if int_val in self.commands: # checks if 'int_val' is an existing 'key' in the command dictionary (line 373)
+		control_string = 'Result:'
+		data_byte = self.ser.read(11)  # read serial data (11 bytes)
+		if len(data_byte) == 11 and str(data_byte)[2:9] == control_string:
+			int_val = int(str(data_byte)[9:11])  # converts the last two 'bytes' of the incoming stream to 'string' then to 'int'
+			if int_val in self.commands: # checks if 'int_val' is an existing 'key' in the command dictionary (line 373)
 				self.commands[int_val]()
 
 		self.after(5, self.serial_read)
@@ -435,31 +435,31 @@ class Voice(Frame):
 	# Uses system screen saver function to turn on and off the monitor
 	def one(self):
 		print('command 1') # prints to console window
-	  	if not self.var_one:
+		if not self.var_one:
 			subprocess.call('xset dpms force off', shell = True)
-	  	elif self.var_one:
+		elif self.var_one:
 			subprocess.call('xset dpms force on', shell = True)
-	  	self.var_one ^= 1
+		self.var_one ^= 1
 
 	# Alternates the calendar font colours upon incoming voice command
 	def two(self):
 		print('command 2')
-	  	if w.calender.eventNameLbl.cget('fg') =='white':
+		if w.calender.eventNameLbl.cget('fg') =='white':
 			w.calender.eventNameLbl.config(fg='black')
 			w.calender.calendarLbl.config(fg='black')
-	  	elif w.calender.eventNameLbl.cget('fg') =='black':
+		elif w.calender.eventNameLbl.cget('fg') =='black':
 			w.calender.eventNameLbl.config(fg='white')
 			w.calender.calendarLbl.config(fg='white')
 
 	# Alternates the news header label colour and number of news headlines
 	def three(self):
 		print('command 3')
-	  	global num_headlines
-	  	if num_headlines == 3:
+		global num_headlines
+		if num_headlines == 3:
 			w.news.newsLbl.config(fg='black')
 			num_headlines = 0
 			w.news.get_headlines()
-	  	elif num_headlines == 0:
+		elif num_headlines == 0:
 			w.news.newsLbl.config(fg='white')
 			num_headlines = 3
 			w.news.get_headlines()
@@ -467,7 +467,7 @@ class Voice(Frame):
 	# Alternates the calendar font colours upon incoming voice command
 	def four(self):
 		print('command 4')
-	  	if w.message.messageLbl.cget('fg') =='white':
+		if w.message.messageLbl.cget('fg') =='white':
 			w.message.messageLbl.config(fg='black')
 		elif w.message.messageLbl.cget('fg') =='black':
 			w.message.messageLbl.config(fg='white')
@@ -475,10 +475,10 @@ class Voice(Frame):
 	# Alternates the calendar font colours upon incoming voice command
 	def five(self):
 		print('command 5')
-	  	if w.timetable.timeTableLbl.cget('fg') =='white':
+		if w.timetable.timeTableLbl.cget('fg') =='white':
 			w.timetable.timeTitleLbl.config(fg='black')
 			w.timetable.timeTableLbl.config(fg='black')
-	  	elif w.timetable.timeTableLbl.cget('fg') =='black':
+		elif w.timetable.timeTableLbl.cget('fg') =='black':
 			w.timetable.timeTitleLbl.config(fg='white')
 			w.timetable.timeTableLbl.config(fg='white')
 	
