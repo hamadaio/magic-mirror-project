@@ -362,7 +362,8 @@ class Message(Frame):
             self.message_check = self.message_new
 
         self.after(18000, self.get_message)
-        
+
+#Added in addition to the original widgets
 class timeTable(Frame):
 	def __init__(self, parent):
 		Frame.__init__(self, parent, bg='black')
@@ -420,62 +421,67 @@ class Voice(Frame):
         print('init complete')
         self.serial_read()
 
-    def serial_read(self):
-        control_string = 'Result:'
-        data_byte = self.ser.read(11)  # read serial data (11 bytes)
-        if len(data_byte) == 11 and str(data_byte)[2:9] == control_string:
-            int_val = int(str(data_byte)[9:11])  # converts the last two 'bytes' of the incoming stream to 'string' then to 'int'
-            if int_val in self.commands: # checks if 'int_val' is an existing 'key' in the command dictionary (line 373)
-                self.commands[int_val]()
+	def serial_read(self):
+	  control_string = 'Result:'
+	  data_byte = self.ser.read(11)  # read serial data (11 bytes)
+	  if len(data_byte) == 11 and str(data_byte)[2:9] == control_string:
+		  int_val = int(str(data_byte)[9:11])  # converts the last two 'bytes' of the incoming stream to 'string' then to 'int'
+		  if int_val in self.commands: # checks if 'int_val' is an existing 'key' in the command dictionary (line 373)
+			  self.commands[int_val]()
 
-        self.after(5, self.serial_read)
+	  self.after(5, self.serial_read)
 
-    # Uses system screen saver function to turn on and off the monitor
-    def one(self):
-        print('command 1') # prints to console window
-        if not self.var_one:
-            subprocess.call('xset dpms force off', shell = True)
-        elif self.var_one:
-            subprocess.call('xset dpms force on', shell = True)
-        self.var_one ^= 1
+	# Uses system screen saver function to turn on and off the monitor
+	def one(self):
+	  print('command 1') # prints to console window
+	  if not self.var_one:
+		  subprocess.call('xset dpms force off', shell = True)
+	  elif self.var_one:
+		  subprocess.call('xset dpms force on', shell = True)
+	  self.var_one ^= 1
 
-    # Alternates the calendar font colours upon incoming voice command
-    def two(self):
-      print('command 2')
-      if w.calender.eventNameLbl.cget('fg') =='white':
-          w.calender.eventNameLbl.config(fg='black')
-          w.calender.calendarLbl.config(fg='black')
-      elif w.calender.eventNameLbl.cget('fg') =='black':
-          w.calender.eventNameLbl.config(fg='white')
-          w.calender.calendarLbl.config(fg='white')
+	# Alternates the calendar font colours upon incoming voice command
+	def two(self):
+	  print('command 2')
+	  if w.calender.eventNameLbl.cget('fg') =='white':
+		  w.calender.eventNameLbl.config(fg='black')
+		  w.calender.calendarLbl.config(fg='black')
+	  elif w.calender.eventNameLbl.cget('fg') =='black':
+		  w.calender.eventNameLbl.config(fg='white')
+		  w.calender.calendarLbl.config(fg='white')
 
-    # Alternates the news header label colour and number of news headlines
-    def three(self):
-      print('command 3')
-      global num_headlines
-      if num_headlines == 3:
-          w.news.newsLbl.config(fg='black')
-          num_headlines = 0
-          w.news.get_headlines()
-      elif num_headlines == 0:
-          w.news.newsLbl.config(fg='white')
-          num_headlines = 3
-          w.news.get_headlines()
+	# Alternates the news header label colour and number of news headlines
+	def three(self):
+	  print('command 3')
+	  global num_headlines
+	  if num_headlines == 3:
+		  w.news.newsLbl.config(fg='black')
+		  num_headlines = 0
+		  w.news.get_headlines()
+	  elif num_headlines == 0:
+		  w.news.newsLbl.config(fg='white')
+		  num_headlines = 3
+		  w.news.get_headlines()
 
-    # Alternates the calendar font colours upon incoming voice command
-    def four(self):
-      print('command 4')
-      if w.message.messageLbl.cget('fg') =='white':
-          w.message.messageLbl.config(fg='black')
-      elif w.message.messageLbl.cget('fg') =='black':
-          w.message.messageLbl.config(fg='white')
+	# Alternates the calendar font colours upon incoming voice command
+	def four(self):
+	  print('command 4')
+	  if w.message.messageLbl.cget('fg') =='white':
+		  w.message.messageLbl.config(fg='black')
+	  elif w.message.messageLbl.cget('fg') =='black':
+		  w.message.messageLbl.config(fg='white')
 
-    # Default...
-    def five(self):
-      print('command 5')
-
-
-
+	# Alternates the calendar font colours upon incoming voice command
+	def five(self):
+	  print('command 5')
+	  if w.timetable.timeTableLbl.cget('fg') =='white':
+		  w.timetable.timeTitleLbl.config(fg='black')
+		  w.timetable.timeTableLbl.config(fg='black')
+	  elif w.timetable.timeTableLbl.cget('fg') =='black':
+		  w.timetable.timeTitleLbl.config(fg='white')
+		  w.timetable.timeTableLbl.config(fg='white')
+	
+		  
 class FullscreenWindow:
     def __init__(self):
         # Frame setup
