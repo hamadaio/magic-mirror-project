@@ -21,6 +21,7 @@ import feedparser
 import subprocess
 import urllib.request
 import datetime
+import xmltodict
 from googleapiclient.discovery import build
 from httplib2 import Http
 from oauth2client import file, client, tools
@@ -49,7 +50,7 @@ weather_unit = 'si' # see https://darksky.net/dev/docs/forecast for full list of
 latitude = '58' # Set this if IP location lookup does not work for you (must be a string)
 longitude = '16' # Set this if IP location lookup does not work for you (must be a string)
 
-#################### FONT AND WIDGET PADDINGS SETTINGS ####################
+#################### FONT AND WIDGET PADDING- SETTINGS ####################
 xlarge_text_size = 94
 large_text_size = 48
 medium_text_size = 28
@@ -344,7 +345,7 @@ class Calendar(Frame):
 # Added in addition to the original widgets
 class Message(Frame):
     def __init__(self, parent):
-        Frame.__init__(self, parent)
+        Frame.__init__(self, parent, bg='black')
         self.message_new = ''
         self.message_check = ''
         self.messageLbl = Label(self, text=self.message_new, font=('Helvetica', medium_text_size), fg="black", bg="black")
@@ -361,7 +362,36 @@ class Message(Frame):
             self.message_check = self.message_new
 
         self.after(18000, self.get_message)
-        
+
+#Added in addition to the original widgets
+class timeTable(Frame):
+	def __init__(self, parent):
+		Frame.__init__(self, parent, bg='black')
+		self.time_title_string = 'Tidtabell'
+		self.time_table_string = ''
+		self.timeTitleLbl = Label(self, text=self.time_title_string, font=('Helvetica', medium_text_size), fg="white", bg="black")
+		self.timeTitleLbl.pack(side=TOP, anchor=W)
+		self.timetableLbl = Label(self, text=self.time_table_string, anchor=W, justify=LEFT, font=('Helvetica', minimal_text_size), fg="white", bg="black")
+		self.timetableLbl.pack(side=TOP, anchor=W)
+		self.get_timeTable()
+		#self.timetableLbl.config(fg = 'black')
+       
+	def get_timeTable(self):
+		try:
+			get_api = requests.get("https://api.resrobot.se/v2/departureBoard?key=4deee6e8-978d-43ea-8564-2f6b0b405202&id=740054321&direction=740000009&maxJourneys=3")
+			r = (get_api.text)
+			r = xmltodict.parse(r)
+			temp_string = r.get('DepartureBoard', {}).get('Departure', {})
+			
+			for i in range (3):
+				self.time_table_string += str(temp_string[i].get('@stop')[0:9] + ' ' + temp_string[i].get('@name')[13:] + 
+					' ' + temp_string[i].get('@time') + '\n')
+				
+			self.timetableLbl.config(text = self.time_table_string)
+			self.time_table_string = ''
+		
+		finally:
+			self.after(600000, self.get_timeTable)
         
 # New class for Geeetech voice-recognition module set-up
 class Voice(Frame):
@@ -384,69 +414,74 @@ class Voice(Frame):
  
         # For safety run twice to make sure it is in the correct mode
         for i in range(2):
-          self.ser.write(serial.to_bytes([0xAA])) # set speech module to waiting state. See voice module data sheet.
-          time.sleep(0.5)
-          self.ser.write(serial.to_bytes([0x21])) # import group 1 and await voice input
-          time.sleep(0.5)
+          	self.ser.write(serial.to_bytes([0xAA])) # set speech module to waiting state. See voice module data sheet.
+          	time.sleep(0.5)
+          	self.ser.write(serial.to_bytes([0x21])) # import group 1 and await voice input
+          	time.sleep(0.5)
         print('init complete')
         self.serial_read()
 
-    def serial_read(self):
-        control_string = 'Result:'
-        data_byte = self.ser.read(11)  # read serial data (11 bytes)
-        if len(data_byte) == 11 and str(data_byte)[2:9] == control_string:
-            int_val = int(str(data_byte)[9:11])  # converts the last two 'bytes' of the incoming stream to 'string' then to 'int'
-            if int_val in self.commands: # checks if 'int_val' is an existing 'key' in the command dictionary (line 373)
-                self.commands[int_val]()
+	def serial_read(self):
+	  	control_string = 'Result:'
+	  	data_byte = self.ser.read(11)  # read serial data (11 bytes)
+	  	if len(data_byte) == 11 and str(data_byte)[2:9] == control_string:
+		  	int_val = int(str(data_byte)[9:11])  # converts the last two 'bytes' of the incoming stream to 'string' then to 'int'
+		  	if int_val in self.commands: # checks if 'int_val' is an existing 'key' in the command dictionary (line 373)
+				self.commands[int_val]()
 
-        self.after(5, self.serial_read)
+		self.after(5, self.serial_read)
 
-    # Uses system screen saver function to turn on and off the monitor
-    def one(self):
-        print('command 1') # prints to console window
-        if not self.var_one:
-            subprocess.call('xset dpms force off', shell = True)
-        elif self.var_one:
-            subprocess.call('xset dpms force on', shell = True)
-        self.var_one ^= 1
+	# Uses system screen saver function to turn on and off the monitor
+	def one(self):
+		print('command 1') # prints to console window
+	  	if not self.var_one:
+			subprocess.call('xset dpms force off', shell = True)
+	  	elif self.var_one:
+			subprocess.call('xset dpms force on', shell = True)
+	  	self.var_one ^= 1
 
-    # Alternates the calendar font colours upon incoming voice command
-    def two(self):
-      print('command 2')
-      if w.calender.eventNameLbl.cget('fg') =='white':
-          w.calender.eventNameLbl.config(fg='black')
-          w.calender.calendarLbl.config(fg='black')
-      elif w.calender.eventNameLbl.cget('fg') =='black':
-          w.calender.eventNameLbl.config(fg='white')
-          w.calender.calendarLbl.config(fg='white')
+	# Alternates the calendar font colours upon incoming voice command
+	def two(self):
+		print('command 2')
+	  	if w.calender.eventNameLbl.cget('fg') =='white':
+			w.calender.eventNameLbl.config(fg='black')
+			w.calender.calendarLbl.config(fg='black')
+	  	elif w.calender.eventNameLbl.cget('fg') =='black':
+			w.calender.eventNameLbl.config(fg='white')
+			w.calender.calendarLbl.config(fg='white')
 
-    # Alternates the news header label colour and number of news headlines
-    def three(self):
-      print('command 3')
-      global num_headlines
-      if num_headlines == 3:
-          w.news.newsLbl.config(fg='black')
-          num_headlines = 0
-          w.news.get_headlines()
-      elif num_headlines == 0:
-          w.news.newsLbl.config(fg='white')
-          num_headlines = 3
-          w.news.get_headlines()
+	# Alternates the news header label colour and number of news headlines
+	def three(self):
+		print('command 3')
+	  	global num_headlines
+	  	if num_headlines == 3:
+			w.news.newsLbl.config(fg='black')
+			num_headlines = 0
+			w.news.get_headlines()
+	  	elif num_headlines == 0:
+			w.news.newsLbl.config(fg='white')
+			num_headlines = 3
+			w.news.get_headlines()
 
-    # Alternates the calendar font colours upon incoming voice command
-    def four(self):
-      print('command 4')
-      if w.message.messageLbl.cget('fg') =='white':
-          w.message.messageLbl.config(fg='black')
-      elif w.message.messageLbl.cget('fg') =='black':
-          w.message.messageLbl.config(fg='white')
+	# Alternates the calendar font colours upon incoming voice command
+	def four(self):
+		print('command 4')
+	  	if w.message.messageLbl.cget('fg') =='white':
+			w.message.messageLbl.config(fg='black')
+		elif w.message.messageLbl.cget('fg') =='black':
+			w.message.messageLbl.config(fg='white')
 
-    # Default...
-    def five(self):
-      print('command 5')
-
-
-
+	# Alternates the calendar font colours upon incoming voice command
+	def five(self):
+		print('command 5')
+	  	if w.timetable.timeTableLbl.cget('fg') =='white':
+			w.timetable.timeTitleLbl.config(fg='black')
+			w.timetable.timeTableLbl.config(fg='black')
+	  	elif w.timetable.timeTableLbl.cget('fg') =='black':
+			w.timetable.timeTitleLbl.config(fg='white')
+			w.timetable.timeTableLbl.config(fg='white')
+	
+		  
 class FullscreenWindow:
     def __init__(self):
         # Frame setup
@@ -454,8 +489,10 @@ class FullscreenWindow:
         self.tk.configure(background='black')
         self.topFrame = Frame(self.tk, background = 'black')
         self.bottomFrame = Frame(self.tk, background = 'black')
+        self.leftFrame = Frame(self.tk, background = 'black')
         self.topFrame.pack(side = TOP, fill=BOTH, expand = YES)
         self.bottomFrame.pack(side = BOTTOM, fill=BOTH, expand = YES)
+        self.leftFrame.pack(side = LEFT)
         self.state = True
         self.tk.bind("<Return>", self.toggle_fullscreen)
         self.tk.bind("<Escape>", self.end_fullscreen)
@@ -478,8 +515,11 @@ class FullscreenWindow:
         # Message
         self.message = Message(self.topFrame)
         self.message.pack(side=BOTTOM, anchor=S)
+        # Time Table
+        self.timetable = timeTable(self.leftFrame)
+        self.timetable.pack(side=LEFT, anchor=W)
         # Voice
-        Voice(self.topFrame) # removed 'listen'
+        Voice(self.topFrame) 
 
     def toggle_fullscreen(self, event=None):
         self.state = not self.state  # Just toggling the boolean
