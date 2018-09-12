@@ -1,10 +1,14 @@
-#   Product name: QuickSight
-#   File name: quicksight_init.py
-#   Original author/ code template: https://github.com/HackerShackOfficial/Smart-Mirror
-#   Original code edited by: Mustafa S. Hamada, Christoffer Palm & Marie Sahiti
-#   Date: 2018-09-
-#   Description:
-#   Voice-controlled Python(3) program that displays widgets with information snippets for every day use
+#	Product name: QuickSight
+#	File name: quicksight_init.py
+#	Authors: Mustafa S. Hamada, Christoffer Palm & Marie Sahiti
+#	
+#	Original Tk interface code template: https://github.com/HackerShackOfficial/Smart-Mirror
+#	Original serial-read code template: https://www.piddlerintheroot.com/voice-recognition/
+#
+#	Date: of completion 2018-09-14
+#	
+#	Program description:
+#	Voice-controlled Python(3) program that displays widgets with information snippets for every day use
 
 
 #################### IMPORT LIBRARIES ####################
@@ -515,7 +519,7 @@ class FullscreenWindow:
         self.tk.attributes("-fullscreen", self.state)
         # Message
         self.message = Message(self.topFrame)
-        self.message.pack(side=BOTTOM, anchor=S)
+        self.message.pack(side=BOTTOM, anchor=SW)
         # Time Table
         self.timetable = timeTable(self.leftFrame)
         self.timetable.pack(side=LEFT, anchor=W)
