@@ -7,7 +7,7 @@
 #	Original serial-read code template:
 #       https://www.piddlerintheroot.com/voice-recognition/
 #
-#	Date: of completion 2018-09-14
+#	Date of completion: 2018-09-14
 #	
 #	Program description:
 #	Voice-controlled Python(3) program that displays widgets with
